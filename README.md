@@ -29,6 +29,7 @@
 
 ---
 - Login, Registration and logout
+- Email verification and Password Reset
 - search and filtering articles by title, body, category and author
 - create, edit and delete articles for admins only
 - view and comment on articles by users and admins
