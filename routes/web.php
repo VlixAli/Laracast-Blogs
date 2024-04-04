@@ -6,10 +6,15 @@ use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PostCommentController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\SessionController;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use App\Models\User;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 
 Route::controller(PostController::class)->group(function () {
@@ -31,7 +36,7 @@ Route::controller(RegisterController::class)
 Route::controller(SessionController::class)->group(function () {
     Route::middleware('guest')->prefix('login')->group(function () {
         Route::get('/', 'create');
-        Route::post('/', 'store');
+        Route::post('/', 'store')->name('login');
     });
 
     Route::post('logout', 'destroy')->middleware('auth');
@@ -50,6 +55,24 @@ Route::controller(EmailVerificationController::class)
         Route::post('/verification-notification', 'resend')
             ->middleware('throttle:6,1')
             ->name('verification.send');
+    });
+
+Route::controller(ResetPasswordController::class)
+    ->middleware('guest')->group(function () {
+        Route::prefix('/forgot-password')->group(function () {
+            Route::get('/', 'create')->name('password.request');
+
+            Route::post('/', 'store')->name('password.email');
+        });
+
+        Route::prefix('/reset-password')->group(function () {
+            Route::get('/', 'show')->name('reset-password-sent');
+
+            Route::get('/{token}', 'createResetPassword')->name('password.reset');
+
+            Route::post('/', 'storeResetPassword')->name('password.update');
+        });
+
     });
 
 Route::controller(AdminPostController::class)
