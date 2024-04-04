@@ -1,11 +1,14 @@
 <?php
 
 use App\Http\Controllers\AdminPostController;
+use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\PostCommentController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\SessionController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
@@ -14,7 +17,8 @@ Route::controller(PostController::class)->group(function () {
     Route::get('posts/{post:slug}', 'show');
 });
 
-Route::post('posts/{post:slug}/comments', [PostCommentController::class, 'store']);
+Route::post('posts/{post:slug}/comments', [PostCommentController::class, 'store'])
+    ->middleware('verified');
 
 Route::post('newsletter', NewsletterController::class);
 
@@ -32,6 +36,21 @@ Route::controller(SessionController::class)->group(function () {
 
     Route::post('logout', 'destroy')->middleware('auth');
 });
+
+Route::controller(EmailVerificationController::class)
+    ->prefix('/email')->middleware('auth')->group(function () {
+        Route::prefix('/verify')->group(function () {
+            Route::get('/', 'show')
+                ->name('verification.notice');
+            Route::get('/{id}/{hash}', 'verify')
+                ->middleware('signed')
+                ->name('verification.verify');
+        });
+
+        Route::post('/verification-notification', 'resend')
+            ->middleware('throttle:6,1')
+            ->name('verification.send');
+    });
 
 Route::controller(AdminPostController::class)
     ->middleware('can:admin')->group(function () {
